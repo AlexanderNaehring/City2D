@@ -29,7 +29,6 @@ Module output
   EndProcedure
   
   Procedure add(str$)
-    Protected file
     Debug str$
     If LogFile$
       If file
@@ -40,7 +39,7 @@ Module output
   EndProcedure
 EndModule
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 21
+; CursorPosition = 29
 ; Folding = -
 ; EnableUnicode
 ; EnableXP

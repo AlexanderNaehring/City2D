@@ -5,10 +5,16 @@ XIncludeFile "output.pbi"
 DeclareModule Engine2D
   EnableExplicit
   
+;   Enumeration
+;     #ScreenMode_WindowedFullScreen
+;     #ScreenMode_Windowed
+;   EndEnumeration
+  
   Structure screen
     width.i
     height.i
-    depths.i
+    depth.i
+;     mode.i
   EndStructure
   
   Structure settings
@@ -22,7 +28,7 @@ DeclareModule Engine2D
   EndStructure
   
   Structure state
-    mouse.position
+    screen.screen
     hasFocus.i
   EndStructure
   
@@ -35,7 +41,10 @@ DeclareModule Engine2D
   Declare screenClose()
   Declare nextFrame()
   Declare getMousePosition(*mouse)
-  
+  Declare loadGraphic(name$, file$, width = 0, height = 0)
+  Declare displayGraphic(name$, x, y)
+  Declare displayTransparentGraphic(name$, x, y, intensity = 255, color = -1)
+  Declare displayCursor(name$)
 EndDeclareModule
 
 Module Engine2D
@@ -53,7 +62,8 @@ Module Engine2D
   Global window
   Global initialized = #False
   Global userSettings.settings
-  Global mouse.position
+  Global NewMap graphics()
+;   Global mouse.position
   
   ; Private Procedures
   Procedure updateFPS(*fps.fps)
@@ -66,19 +76,6 @@ Module Engine2D
       \frameCount + 1
     EndWith
   EndProcedure
-  
-  
-  Procedure mouseThread(*mouse.position)
-    Repeat
-      If ExamineMouse()
-        *mouse\x = MouseX()
-        *mouse\y = MouseY()
-      EndIf
-      Delay(20)
-    ForEver
-  EndProcedure
-  
-  
   
   ; Public Procedures
   Procedure init(*settings)
@@ -93,6 +90,8 @@ Module Engine2D
     
     CopyStructure(*settings, userSettings, settings)
     
+    UsePNGImageDecoder()
+    
     If Not InitSprite()
       lastError$ = "Engine2D::init() - error: failed to init graphics!"
       output::add(lastError$)
@@ -101,18 +100,6 @@ Module Engine2D
     
     If Not InitKeyboard()
       lastError$ = "Engine2D::init() - error: failed to init keyboard!"
-      output::add(lastError$)
-      ProcedureReturn #False
-    EndIf
-    
-    If Not InitMouse()
-      lastError$ = "Engine2D::init() - error: failed to init mouse!"
-      output::add(lastError$)
-      ProcedureReturn #False
-    EndIf
-    
-    If Not InitMouse()
-      lastError$ = "Engine2D::init() - error: failed to init mouse!"
       output::add(lastError$)
       ProcedureReturn #False
     EndIf
@@ -131,26 +118,34 @@ Module Engine2D
   EndProcedure
   
   Procedure screenOpen()
-    Protected width, height, depth, screen$
+    Protected screen$
     If Not ExamineDesktops()
       output::add("Engine2D::screenOpen() - error: cannot examine desktops!")
       ProcedureReturn #False
     EndIf
     
-    width   = DesktopWidth(0)
-    height  = DesktopHeight(0)
-    depth   = DesktopDepth(0)
-    screen$ = Str(width)+"x"+Str(height);+"x"+Str(depth)
+    With userSettings\screen
+      If Not \width
+        \width = DesktopWidth(0)
+      EndIf
+      If Not \height
+        \height = DesktopHeight(0)
+      EndIf
+      If Not \depth
+        \depth = DesktopDepth(0)
+      EndIf
+      screen$ = Str(\width)+"x"+Str(\height)+"x"+Str(\depth)
+    EndWith
     
     output::add("Engine2D::screenOpen() - open screen: "+screen$)
-    
-    window = OpenWindow(#PB_Any, 0, 0, width, height, userSettings\title$, #PB_Window_BorderLess)
-    OpenWindowedScreen(WindowID(window), 0, 0, width, height, #True, 0, 0, #PB_Screen_NoSynchronization)
-    ShowCursor_(0)
-    ;OpenScreen(width, height, depth, title$, #PB_Screen_SmartSynchronization)
+  
+    window = OpenWindow(#PB_Any, 0, 0, userSettings\screen\width, userSettings\screen\height, userSettings\title$, #PB_Window_BorderLess)
+    OpenWindowedScreen(WindowID(window), 0, 0, userSettings\screen\width, userSettings\screen\height, #True, 0, 0, #PB_Screen_NoSynchronization)
+    ShowCursor_(0) ; hide cursor while over window
     SetFrameRate(60)
-        
     FlipBuffers()
+    
+    CopyStructure(userSettings\screen, state\screen, screen)
     
     ProcedureReturn #True 
   EndProcedure
@@ -194,14 +189,11 @@ Module Engine2D
         Box(10, 10, 200, 50, RGB(255,255,255))
         DrawingMode(#PB_2DDrawing_Transparent)
         DrawText(15, 15, Str(fps1\fps) + " fps ("+Str(fps2\fps)+" fps)", RGB(0,0,0))
-        
-        If Not IsScreenActive()
-          Delay(20)
-          DrawText(15, 15+20, "PAUSE")
-        EndIf
         StopDrawing()
       EndIf
     EndIf
+    
+    state\hasFocus = IsScreenActive()
     
     ; send frame to screen
     FlipBuffers()
@@ -221,12 +213,67 @@ Module Engine2D
     *mouse\y = WindowMouseY(window)
   EndProcedure
   
+  Procedure loadGraphic(name$, file$, width = 0, height = 0)
+    Protected sprite
+    
+    If FindMapElement(graphics(), name$)
+      output::add("Engine2D::loadGraphic() - graphic with name {"+name$+"} already loaded!")
+      ProcedureReturn #False
+    EndIf
+    
+    sprite = LoadSprite(#PB_Any, file$, #PB_Sprite_AlphaBlending)
+    If Not sprite
+      output::add("Engine2D::loadGraphic() - error: could not load {"+name$+"} from file {"+file$+"}")
+      ProcedureReturn #False
+    EndIf
+    
+    If width And height
+      ZoomSprite(sprite, width, height)
+    EndIf
+    
+    graphics(name$) = sprite
+    ProcedureReturn #True
+  EndProcedure
+  
+  Procedure displayGraphic(name$, x, y)
+    Protected sprite
+    If FindMapElement(graphics(), name$)
+      sprite = graphics(name$)
+      If IsSprite(sprite)
+        DisplaySprite(sprite, x, y)
+      EndIf
+    EndIf
+  EndProcedure
+  
+  Procedure displayTransparentGraphic(name$, x, y, intensity = 255, color = -1)
+    Protected sprite
+    If FindMapElement(graphics(), name$)
+      sprite = graphics(name$)
+      If IsSprite(sprite)
+        If color = -1
+          DisplayTransparentSprite(sprite, x, y, intensity)
+        Else
+          DisplayTransparentSprite(sprite, x, y, intensity, color)
+        EndIf
+      EndIf
+    EndIf
+  EndProcedure
+  
+  Procedure displayCursor(name$)
+    Protected sprite
+    If FindMapElement(graphics(), name$)
+      sprite = graphics(name$)
+      If IsSprite(sprite)
+        ZoomSprite(sprite, 64, 64)
+        DisplayTransparentSprite(sprite, WindowMouseX(window) - 64/2, WindowMouseY(window) - 64/2)
+      EndIf
+    EndIf
+  EndProcedure
   
 EndModule
 
 ; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 150
-; FirstLine = 138
-; Folding = --
+; CursorPosition = 15
+; Folding = L+-
 ; EnableUnicode
 ; EnableXP

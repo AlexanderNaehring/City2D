@@ -7,30 +7,30 @@
   <section name="data">
     <explorer view="C:\Program Files\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-07-01 21:38" user="Alexander" host="TOWER"/>
+    <lastopen date="2015-07-01 23:09" user="Alexander" host="TOWER"/>
   </section>
   <section name="files">
     <file name="source\engine2D.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="28f52ee2614ec5322ce59fdec291e8cd"/>
+      <fingerprint md5="e8a7501db1d1f40e368f29519a3d42ed"/>
     </file>
     <file name="source\main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="66d72cebe6ae1b5ca5a7e83fba2c4165"/>
+      <fingerprint md5="905676b9119a962e0cc2331887620f35"/>
     </file>
     <file name="source\output.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="aaae30b25ab9af6ac5df983890e0b91b"/>
+      <fingerprint md5="496a91c43c8329ecd8b47b0e68fa45c0"/>
     </file>
   </section>
   <section name="targets">
     <target name="win64" enabled="1" default="1">
       <inputfile value="source\main.pb"/>
-      <outputfile value="bin\win64\City2D.exe"/>
+      <outputfile value="bin\win64\City2Dx64.exe"/>
       <commandline value="-log"/>
-      <directory value="bin\win64\"/>
+      <directory value="bin\"/>
       <options unicode="1" thread="1" xpskin="1" user="1" debug="1"/>
-      <compilecount enable="1" value="141"/>
+      <compilecount enable="1" value="169"/>
       <buildcount enable="1" value="0"/>
       <execonstant enable="1"/>
     </target>
