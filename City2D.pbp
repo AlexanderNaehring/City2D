@@ -1,38 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.31 (Windows - x64)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.30 (Windows - x64)">
   <section name="config">
     <options closefiles="1" openmode="0" name="City2D"/>
   </section>
   <section name="data">
     <explorer view="C:\Program Files\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-07-01 18:11" user="naeh_al" host="KN-000026"/>
+    <lastopen date="2015-07-01 21:38" user="Alexander" host="TOWER"/>
   </section>
   <section name="files">
     <file name="source\engine2D.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="c82c2d23e6d0847dec0f2f87b0da2851"/>
+      <fingerprint md5="28f52ee2614ec5322ce59fdec291e8cd"/>
     </file>
     <file name="source\main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="153ab87101a6b2d7db79e389e04c3c82"/>
+      <fingerprint md5="66d72cebe6ae1b5ca5a7e83fba2c4165"/>
     </file>
     <file name="source\output.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="1d8e2eb802d0c702e5c24bb89cf97efb"/>
+      <fingerprint md5="aaae30b25ab9af6ac5df983890e0b91b"/>
     </file>
   </section>
   <section name="targets">
     <target name="win64" enabled="1" default="1">
       <inputfile value="source\main.pb"/>
       <outputfile value="bin\win64\City2D.exe"/>
-      <compiler version="PureBasic 5.31 (Windows - x64)"/>
       <commandline value="-log"/>
       <directory value="bin\win64\"/>
       <options unicode="1" thread="1" xpskin="1" user="1" debug="1"/>
-      <subsystem value="OpenGL"/>
-      <compilecount enable="1" value="86"/>
+      <compilecount enable="1" value="141"/>
       <buildcount enable="1" value="0"/>
       <execonstant enable="1"/>
     </target>
