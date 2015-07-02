@@ -28,8 +28,10 @@ DeclareModule Engine2D
   EndStructure
   
   Structure state
-    screen.screen
-    hasFocus.i
+    userSettings.settings
+    hasFocus.i    ; does the screen has the focus?
+    deltaT.i      ; time since last frame update
+    
   EndStructure
   
   Global state.state
@@ -61,7 +63,6 @@ Module Engine2D
   Global lastError$
   Global window
   Global initialized = #False
-  Global userSettings.settings
   Global NewMap graphics()
 ;   Global mouse.position
   
@@ -88,7 +89,7 @@ Module Engine2D
     EndIf
     initialized = #True
     
-    CopyStructure(*settings, userSettings, settings)
+    CopyStructure(*settings, state\userSettings, settings)
     
     UsePNGImageDecoder()
     
@@ -124,7 +125,7 @@ Module Engine2D
       ProcedureReturn #False
     EndIf
     
-    With userSettings\screen
+    With state\userSettings\screen
       If Not \width
         \width = DesktopWidth(0)
       EndIf
@@ -139,13 +140,18 @@ Module Engine2D
     
     output::add("Engine2D::screenOpen() - open screen: "+screen$)
   
-    window = OpenWindow(#PB_Any, 0, 0, userSettings\screen\width, userSettings\screen\height, userSettings\title$, #PB_Window_BorderLess)
-    OpenWindowedScreen(WindowID(window), 0, 0, userSettings\screen\width, userSettings\screen\height, #True, 0, 0, #PB_Screen_NoSynchronization)
-    ShowCursor_(0) ; hide cursor while over window
+    window = OpenWindow(#PB_Any, 0, 0, state\userSettings\screen\width, state\userSettings\screen\height, state\userSettings\title$, #PB_Window_BorderLess)
+    OpenWindowedScreen(WindowID(window), 0, 0, state\userSettings\screen\width, state\userSettings\screen\height, #True, 0, 0, #PB_Screen_NoSynchronization)
+    CompilerSelect #PB_Compiler_OS
+      CompilerCase #PB_OS_Windows
+        ShowCursor_(0) ; hide cursor while over window
+      CompilerCase #PB_OS_Linux
+        ; TODO
+      CompilerCase #PB_OS_MacOS
+        ; TODO
+    CompilerEndSelect
     SetFrameRate(60)
     FlipBuffers()
-    
-    CopyStructure(userSettings\screen, state\screen, screen)
     
     ProcedureReturn #True 
   EndProcedure
@@ -188,7 +194,8 @@ Module Engine2D
       If StartDrawing(output)
         Box(10, 10, 200, 50, RGB(255,255,255))
         DrawingMode(#PB_2DDrawing_Transparent)
-        DrawText(15, 15, Str(fps1\fps) + " fps ("+Str(fps2\fps)+" fps)", RGB(0,0,0))
+        DrawText(15, 15, Str(fps1\fps) + " fps ("+Str(fps2\fps)+" fps)", #Black)
+        DrawText(15, 35, "hasFocus = "+Str(state\hasFocus), #Black)
         StopDrawing()
       EndIf
     EndIf
@@ -260,20 +267,22 @@ Module Engine2D
   EndProcedure
   
   Procedure displayCursor(name$)
+    #CursorSize = 50
     Protected sprite
     If FindMapElement(graphics(), name$)
       sprite = graphics(name$)
       If IsSprite(sprite)
-        ZoomSprite(sprite, 64, 64)
-        DisplayTransparentSprite(sprite, WindowMouseX(window) - 64/2, WindowMouseY(window) - 64/2)
+        ZoomSprite(sprite, #CursorSize, #CursorSize)
+        DisplayTransparentSprite(sprite, WindowMouseX(window) - #CursorSize/2, WindowMouseY(window) - #CursorSize/2)
       EndIf
     EndIf
   EndProcedure
   
 EndModule
 
-; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 15
-; Folding = L+-
+; IDE Options = PureBasic 5.31 (Windows - x64)
+; CursorPosition = 197
+; FirstLine = 120
+; Folding = j+-
 ; EnableUnicode
 ; EnableXP

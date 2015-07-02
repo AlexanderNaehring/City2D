@@ -17,6 +17,8 @@ For i = 1 To CountProgramParameters()
   EndIf
 Next
 
+output::add("current directory: "+GetCurrentDirectory())
+
 Define settings.Engine2D::settings
 ; settings\screen\mode    = Engine2D::#ScreenMode_WindowedFullScreen
 settings\screen\width   = 0  ; use value from primary desktop
@@ -57,7 +59,7 @@ ForEver
 Engine2D::screenClose()
 End
 
-; IDE Options = PureBasic 5.30 (Windows - x64)
-; CursorPosition = 20
+; IDE Options = PureBasic 5.31 (Windows - x64)
+; CursorPosition = 19
 ; EnableUnicode
 ; EnableXP
