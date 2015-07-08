@@ -24,6 +24,7 @@ Define settings.Engine2D::settings
 settings\screen\width   = 0  ; use value from primary desktop
 settings\screen\height  = 0  ; use value from primary desktop
 settings\screen\depth   = 0  ; use value from primary desktop
+settings\screen\maxfps  = 120
 settings\title$ = "City2D"
 
 If Not Engine2D::init(settings)
@@ -32,26 +33,22 @@ If Not Engine2D::init(settings)
 EndIf
 If Not Engine2D::screenOpen()
   MessageRequester("Error", Engine2D::getLastError())
+  End
 EndIf
 
 
 Engine2D::loadGraphic("cursor", "../data/graphics/cursors/cursor.png")
 
+Engine2D::setCursor("cursor")
 
 Repeat
-  
-  Define mouse.Engine2D::position
-  Engine2D::getMousePosition(mouse)
-  
-  Engine2D::displayCursor("cursor")
   
   ExamineKeyboard()
   If KeyboardPushed(#PB_Key_Escape)
     Break
   EndIf
   
-  
-  
+  Engine2D::renderGUI()
   
   Engine2D::nextFrame()
 ForEver
@@ -60,6 +57,6 @@ Engine2D::screenClose()
 End
 
 ; IDE Options = PureBasic 5.31 (Windows - x64)
-; CursorPosition = 19
+; CursorPosition = 35
 ; EnableUnicode
 ; EnableXP

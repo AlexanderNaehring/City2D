@@ -14,6 +14,7 @@ DeclareModule Engine2D
     width.i
     height.i
     depth.i
+    maxfps.i
 ;     mode.i
   EndStructure
   
@@ -31,7 +32,7 @@ DeclareModule Engine2D
     userSettings.settings
     hasFocus.i    ; does the screen has the focus?
     deltaT.i      ; time since last frame update
-    
+    mouse.position
   EndStructure
   
   Global state.state
@@ -42,14 +43,20 @@ DeclareModule Engine2D
   Declare screenOpen()
   Declare screenClose()
   Declare nextFrame()
-  Declare getMousePosition(*mouse)
+  Declare getMousePosition(*mouse.position)
+  Declare getMouseX()
+  Declare getMouseY()
   Declare loadGraphic(name$, file$, width = 0, height = 0)
   Declare displayGraphic(name$, x, y)
   Declare displayTransparentGraphic(name$, x, y, intensity = 255, color = -1)
-  Declare displayCursor(name$)
+  Declare setCursor(name$)
+  Declare renderGUI()
 EndDeclareModule
 
 Module Engine2D
+  
+  #CursorSize = 50
+  
   ; private Structures
   Structure fps
     lastTime.i    ; [ms]
@@ -64,6 +71,7 @@ Module Engine2D
   Global window
   Global initialized = #False
   Global NewMap graphics()
+  Global cursor
 ;   Global mouse.position
   
   ; Private Procedures
@@ -76,6 +84,35 @@ Module Engine2D
       EndIf
       \frameCount + 1
     EndWith
+  EndProcedure
+  
+  Procedure updateMousePosition(*mouse.position)
+    Protected x, y, win
+    
+    Repeat
+      win = window
+      If Not win
+        Break
+      EndIf
+      
+      x = WindowMouseX(win)
+      y = WindowMouseY(win)
+      If x <> -1 And y <> -1
+        *mouse\x = x
+        *mouse\y = y
+      EndIf
+      Delay(1)
+    ForEver
+  EndProcedure
+  
+  Procedure displayCursor()
+    If cursor
+      If IsSprite(cursor)
+        DisplayTransparentSprite(cursor, state\mouse\x - #CursorSize/2, state\mouse\y - #CursorSize/2)
+      Else
+        cursor = 0
+      EndIf
+    EndIf
   EndProcedure
   
   ; Public Procedures
@@ -121,7 +158,8 @@ Module Engine2D
   Procedure screenOpen()
     Protected screen$
     If Not ExamineDesktops()
-      output::add("Engine2D::screenOpen() - error: cannot examine desktops!")
+      lastError$ = "Engine2D::screenOpen() - error: cannot examine desktops!"
+      output::add(lastError$)
       ProcedureReturn #False
     EndIf
     
@@ -135,13 +173,36 @@ Module Engine2D
       If Not \depth
         \depth = DesktopDepth(0)
       EndIf
+      
+      Select \maxfps
+        Case 25, 30, 60, 120, 144
+        Default
+          \maxfps = 0
+      EndSelect
+      
       screen$ = Str(\width)+"x"+Str(\height)+"x"+Str(\depth)
+      If \maxfps
+        screen$ + " @"+Str(\maxfps)+" fps"
+      EndIf
     EndWith
     
     output::add("Engine2D::screenOpen() - open screen: "+screen$)
   
     window = OpenWindow(#PB_Any, 0, 0, state\userSettings\screen\width, state\userSettings\screen\height, state\userSettings\title$, #PB_Window_BorderLess)
-    OpenWindowedScreen(WindowID(window), 0, 0, state\userSettings\screen\width, state\userSettings\screen\height, #True, 0, 0, #PB_Screen_NoSynchronization)
+    If Not window
+      lastError$ = "Engine2D::screenOpen() - error: cannot open window!"
+      output::add(lastError$)
+      ProcedureReturn #False
+    EndIf
+    
+    If Not OpenWindowedScreen(WindowID(window), 0, 0, state\userSettings\screen\width, state\userSettings\screen\height, #True, 0, 0, #PB_Screen_NoSynchronization)
+      lastError$ = "Engine2D::screenOpen() - error: cannot open screen!"
+      output::add(lastError$)
+      CloseWindow(window)
+      window = 0
+      ProcedureReturn #False
+    EndIf
+    
     CompilerSelect #PB_Compiler_OS
       CompilerCase #PB_OS_Windows
         ShowCursor_(0) ; hide cursor while over window
@@ -150,15 +211,37 @@ Module Engine2D
       CompilerCase #PB_OS_MacOS
         ; TODO
     CompilerEndSelect
-    SetFrameRate(60)
+    
+    If state\userSettings\screen\maxfps
+      SetFrameRate(state\userSettings\screen\maxfps - 1)
+    EndIf
     FlipBuffers()
+    
+    CreateThread(@updateMousePosition(), state\mouse)
     
     ProcedureReturn #True 
   EndProcedure
   
   Procedure screenClose()
+    Protected win
     output::add("Engine2D::screenClose()")
+    
+    ; locally store window ID
+    win = window
+    
+    ; set global window ID to zero, indicating window will close
+    window = 0
+    Delay(100)
+    
+    ; hide window
+    HideWindow(win, #True)
+    
+    ; close screen
     CloseScreen()
+    
+    ; close window
+    CloseWindow(win)
+    
     ProcedureReturn #True
   EndProcedure
   
@@ -215,9 +298,16 @@ Module Engine2D
   EndProcedure
   
   Procedure getMousePosition(*mouse.position)
-    ;CopyStructure(mouse, *mouse, position)
-    *mouse\x = WindowMouseX(window)
-    *mouse\y = WindowMouseY(window)
+    *mouse\x = state\mouse\x
+    *mouse\y = state\mouse\y
+  EndProcedure
+  
+  Procedure getMouseX()
+    ProcedureReturn state\mouse\x
+  EndProcedure
+  
+  Procedure getMouseY()
+    ProcedureReturn state\mouse\y
   EndProcedure
   
   Procedure loadGraphic(name$, file$, width = 0, height = 0)
@@ -266,23 +356,28 @@ Module Engine2D
     EndIf
   EndProcedure
   
-  Procedure displayCursor(name$)
-    #CursorSize = 50
+  Procedure setCursor(name$)
     Protected sprite
     If FindMapElement(graphics(), name$)
       sprite = graphics(name$)
       If IsSprite(sprite)
         ZoomSprite(sprite, #CursorSize, #CursorSize)
-        DisplayTransparentSprite(sprite, WindowMouseX(window) - #CursorSize/2, WindowMouseY(window) - #CursorSize/2)
+        cursor = sprite
       EndIf
     EndIf
+  
+  EndProcedure
+  
+  Procedure renderGUI()
+    
+    displayCursor()
   EndProcedure
   
 EndModule
 
 ; IDE Options = PureBasic 5.31 (Windows - x64)
-; CursorPosition = 197
-; FirstLine = 120
-; Folding = j+-
+; CursorPosition = 206
+; FirstLine = 105
+; Folding = DCi-
 ; EnableUnicode
 ; EnableXP

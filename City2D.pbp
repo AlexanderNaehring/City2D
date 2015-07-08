@@ -7,16 +7,16 @@
   <section name="data">
     <explorer view="C:\Program Files\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-07-02 12:33" user="naeh_al" host="KN-000026"/>
+    <lastopen date="2015-07-08 16:11" user="naeh_al" host="KN-000026"/>
   </section>
   <section name="files">
     <file name="source\engine2D.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="1749001843da8b1d14aca5417a4d6518"/>
+      <fingerprint md5="a51ab8c95c6f8f0ed4e6453a2ddf1acc"/>
     </file>
     <file name="source\main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="08405f6c170188d8cf838b9204a10542"/>
+      <fingerprint md5="de358fc29847a1bdb816346d7aee15ae"/>
     </file>
     <file name="source\output.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -30,7 +30,7 @@
       <commandline value="-log"/>
       <directory value="bin\"/>
       <options unicode="1" thread="1" xpskin="1" user="1" debug="1"/>
-      <compilecount enable="1" value="182"/>
+      <compilecount enable="1" value="227"/>
       <buildcount enable="1" value="0"/>
       <execonstant enable="1"/>
     </target>
